@@ -1,20 +1,30 @@
-﻿@inherits LayoutComponentBase
+﻿@using Foxhole.Artillery.Data
+@inherits LayoutComponentBase
 
-<MudThemeProvider IsDarkMode="true" />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudThemeProvider IsDarkMode="true"/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 
 <MudLayout>
     <MudAppBar Elevation="0">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudSpacer />
-        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Link="https://github.com/MudBlazor/MudBlazor/" Target="_blank" />
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
+        <MudSpacer/>
+        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Link="https://github.com/bobbah/Foxhole.Artillery" Target="_blank"/>
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" Elevation="1">
         <MudDrawerHeader>
             <MudText Typo="Typo.h6">Foxhole.Artillery</MudText>
         </MudDrawerHeader>
-        <NavMenu />
+        <NavMenu/>
+        <MudSpacer/>
+        <MudContainer Class="pa-4">
+            <MudText>
+                <small>Version @AssemblyInformation.Current.Version (@AssemblyInformation.Current.GetBuildCommit().ToString())</small>
+            </MudText>
+            <MudText>
+                <small>@AssemblyInformation.Current.CopyrightNotice</small>
+            </MudText>
+        </MudContainer>
     </MudDrawer>
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.Large" Class="my-4 pt-4">
@@ -30,4 +40,5 @@
     {
         _drawerOpen = !_drawerOpen;
     }
+
 }

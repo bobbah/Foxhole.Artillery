@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>Foxhole.Artillery</title>
+    <base href="/"/>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet"/>
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet"/>
+    <style>
+        body, html {
+            background-color: rgba(50, 51, 61, 1);
+        }
+        
+        .loading-text {
+            font-family: 'Roboto','Helvetica','Arial','sans-serif';
+            color: rgba(255,255,255,0.6980392156862745);
+        }
+
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .dancing-rectangles {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            width: 200px;
+            height: 50px;
+            margin-bottom: 20px;
+        }
+
+        .rectangle {
+            width: 20px;
+            height: 20px;
+            background-color: rgba(255,255,255,0.6980392156862745);
+            margin: 0 3px;
+            animation: dance 0.8s ease-in-out infinite alternate;
+        }
+
+        .rectangle:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .rectangle:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .rectangle:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .rectangle:nth-child(5) {
+            animation-delay: 0.4s;
+        }
+
+        .rectangle:nth-child(6) {
+            animation-delay: 0.5s;
+        }
+
+        .rectangle:nth-child(7) {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes dance {
+            0% {
+                transform: scaleY(1);
+            }
+            100% {
+                transform: scaleY(2);
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div id="app">
+    <div class="loading-screen">
+        <div class="dancing-rectangles">
+            <div class="rectangle"></div>
+            <div class="rectangle"></div>
+            <div class="rectangle"></div>
+            <div class="rectangle"></div>
+            <div class="rectangle"></div>
+            <div class="rectangle"></div>
+            <div class="rectangle"></div>
+        </div>
+        <h3 class="loading-text">Loading...</h3>
+    </div>
+</div>
+
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+<script src="_framework/blazor.webassembly.js"></script>
+<script src="_content/MudBlazor/MudBlazor.min.js"></script>
+</body>
+
+</html>
