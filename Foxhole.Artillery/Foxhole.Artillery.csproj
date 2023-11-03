@@ -1,18 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
-  <PropertyGroup>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <ContainerRepository >ghcr.io/bobbah/foxhole.artillery</ContainerRepository >
-  </PropertyGroup>
+    <PropertyGroup>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <ContainerRepository>ghcr.io/bobbah/foxhole.artillery</ContainerRepository>
+        <ContainerBaseImage>busybox:1.36</ContainerBaseImage>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MinVer" Version="4.3.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.13" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.13" PrivateAssets="all" />
-    <PackageReference Include="MudBlazor" Version="6.11.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <ContainerEntrypoint Include="busybox;httpd;-f;-v;-p;80;-h;./wwwroot" />
+        <PackageReference Include="MinVer" Version="4.3.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.13"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.13" PrivateAssets="all"/>
+        <PackageReference Include="MudBlazor" Version="6.11.0"/>
+    </ItemGroup>
 
 </Project>
