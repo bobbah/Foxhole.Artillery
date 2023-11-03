@@ -3,7 +3,7 @@
     <PropertyGroup>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <ContainerRepository>ghcr.io/bobbah/foxhole.artillery</ContainerRepository>
-        <ContainerBaseImage>busybox:1.36</ContainerBaseImage>
+        <ContainerBaseImage>registry-1.docker.io/library/busybox:1.36</ContainerBaseImage>
     </PropertyGroup>
 
     <ItemGroup>
