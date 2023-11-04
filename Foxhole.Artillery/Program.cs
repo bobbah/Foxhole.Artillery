@@ -1,7 +1,4 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
-using Foxhole.Artillery.Data;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +9,8 @@ StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configurat
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddMudServices();
+
+builder.Services.AddSignalR().AddAzureSignalR(builder.Configuration["Azure:SignalR:ConnectionString"]);
 
 var app = builder.Build();
 

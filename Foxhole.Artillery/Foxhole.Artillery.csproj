@@ -3,9 +3,11 @@
   <PropertyGroup>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <ContainerRepository >ghcr.io/bobbah/foxhole.artillery</ContainerRepository >
+    <UserSecretsId>ceb6765e-94e4-4693-9f60-ad0bffe4cf53</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.22.0" />
     <PackageReference Include="MinVer" Version="4.3.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
