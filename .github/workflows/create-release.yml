@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Prepare publish artifacts
         run: |
-          dotnet publish Foxhole.Artillery -o publish/linux-x64/Foxhole.Artillery/ -r "linux-x64" --self-contained false -c Release --nologo
+          dotnet publish Foxhole.Artillery -o publish/linux-x64/Foxhole.Artillery/ -r "linux-x64" -c Release --nologo
           7z a publish/Foxhole.Artillery-linux-x64.7z -r ./publish/linux-x64/Foxhole.Artillery/
       - name: Upload release artifacts
         uses: actions/github-script@v4
