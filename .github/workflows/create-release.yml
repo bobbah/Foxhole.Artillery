@@ -1,0 +1,48 @@
+name: Generate Release
+on:
+  release:
+    types: [created]
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.305
+      - name: Checkout source
+        uses: actions/checkout@v3
+      - name: Prepare publish artifacts
+        run: |
+          dotnet publish Foxhole.Artillery -o publish/linux-x64/Foxhole.Artillery/ -r "linux-x64" --self-contained false -c Release --nologo
+          7z a publish/Foxhole.Artillery-linux-x64.7z -r ./publish/linux-x64/Foxhole.Artillery/
+      - name: Upload release artifacts
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const fs = require('fs');
+            const tag = context.ref.replace("refs/tags/", "");
+            console.log("tag = ", tag);
+            // Get release for this tag
+            const release = await github.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag
+            });
+            const releaseRuntimes = ['linux-x64'];
+            const projects = ['Foxhole.Artillery'];
+            for (rt of releaseRuntimes) {
+              for (proj of projects) {
+                // Upload the release asset
+                await github.repos.uploadReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release.data.id,
+                  name: `${proj}-${rt}.7z`,
+                  data: fs.readFileSync(`publish/${proj}-${rt}.7z`)
+                });
+              }
+            } 
