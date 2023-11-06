@@ -1,5 +1,4 @@
 @page "/"
-@using System.Numerics
 @using Foxhole.Artillery.Data
 @using Foxhole.Artillery.Shared.Calculator
 
@@ -74,14 +73,14 @@
                     <MudText Typo="Typo.h5">Firing Vector</MudText>
                 </MudItem>
                 <MudItem xs="12">
-                    <MudGrid>
-                        <MudItem xs="6">
-                            <MudNumericField Disabled HideSpinButtons @bind-Value="@CalculateAdjustedTarget().Distance" Format="F0" Label="Distance" Adornment="Adornment.End" AdornmentText="m"/>
-                        </MudItem>
-                        <MudItem xs="6">
-                            <MudNumericField Disabled HideSpinButtons @bind-Value="@CalculateAdjustedTarget().Azimuth" Format="F1" Label="Azimuth" Adornment="Adornment.End" AdornmentText="°"/>
-                        </MudItem>
-                    </MudGrid>
+                    @foreach (var observation in CalculateTargets())
+                    {
+                        <MudText>
+                            <MudChip Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
+                                @(string.IsNullOrWhiteSpace(observation.TextHint) ? "Unnamed Battery" : observation.TextHint):
+                            </MudChip> @($"{observation.Distance:0}")m, @($"{observation.Azimuth:0.0}")°
+                        </MudText>
+                    }
                 </MudItem>
             </MudGrid>
         </MudPaper>
@@ -98,23 +97,23 @@
                 <MudGrid>
                     <MudItem xs="12" Class="d-flex align-center justify-space-between">
                         <MudText Typo="Typo.h5">@lastName to @name</MudText>
-                        @if (!isLast)
-                        {
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => RemoveReference(cachedIdx)" Size="Size.Small">Delete</MudButton>
-                        }
+                        <div class="d-flex align-center flex-nowrap">
+                            <MudButton Disabled="@isLast" Variant="Variant.Filled" Color="@(cursor.IsArtillery ? Color.Error : Color.Primary)" Size="Size.Small" OnClick="() => cursor.IsArtillery = !cursor.IsArtillery">@(cursor.IsArtillery ? "- ARTILLERY" : "+ ARTILLERY")</MudButton>
+                            @if (!isLast)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => RemoveReference(cachedIdx)" Size="Size.Small" Class="ms-2">Delete</MudButton>
+                            }
+                        </div>
                     </MudItem>
                     <MudItem xs="12">
                         <MudGrid>
-                            @if (!isLast)
-                            {
-                                <MudItem xs="12" md="4">
-                                    <MudTextField @bind-Value="@cursor.TextHint" Placeholder="Description" Label="Description"></MudTextField>
-                                </MudItem>
-                            }
-                            <MudItem xs="6" md="@(isLast ? 6 : 4)">
+                            <MudItem xs="12" md="4">
+                                <MudTextField @bind-Value="@cursor.TextHint" Placeholder="A helpful note..." Label="Description"></MudTextField>
+                            </MudItem>
+                            <MudItem xs="6" md="4">
                                 <MudNumericField HideSpinButtons @bind-Value="cursor.Distance" Format="F0" Label="Distance" Adornment="Adornment.End" AdornmentText="m"/>
                             </MudItem>
-                            <MudItem xs="6" md="@(isLast ? 6 : 4)">
+                            <MudItem xs="6" md="4">
                                 <MudNumericField HideSpinButtons @bind-Value="cursor.Azimuth" Format="F1" Label="Azimuth" Adornment="Adornment.End" AdornmentText="°"/>
                             </MudItem>
                         </MudGrid>
@@ -126,12 +125,12 @@
 </MudGrid>
 
 @code {
-    private WindObservation _wind = new WindObservation();
-    private FoxholeObservation _target = new FoxholeObservation();
-    private List<FoxholeObservation> _referencePoints = new List<FoxholeObservation>() { new FoxholeObservation() };
+    private WindObservation _wind = new();
+    private FoxholeObservation _target = new();
+    private List<FoxholeObservation> _referencePoints = new() { new FoxholeObservation() { IsArtillery = true, TextHint = "Battery A" } };
     private int _hitDistance;
     private float _hitAzimuth;
-    private FiringCharacteristics _characteristics = new FiringCharacteristics() { RangeStep = 1 };
+    private FiringCharacteristics _characteristics = new() { RangeStep = 1 };
     private GunType _typeOfGun;
 
     private GunType TypeOfGun
@@ -144,7 +143,7 @@
         }
     }
 
-    private List<string> _rpNames = new List<string>()
+    private readonly List<string> _rpNames = new()
     {
         "Alpha",
         "Beta",
@@ -181,37 +180,49 @@
 
     private void RemoveReference(int index) => _referencePoints.RemoveAt(index);
 
-    private FoxholeObservation CalculateBaseTarget() => FoxholeObservation.FromVector(_referencePoints.Aggregate(Vector2.Zero, (vec, observation) => vec += observation.Vector * -1) + (new FoxholeObservation() { Distance = _target.Distance, Azimuth = _target.Azimuth }).Vector);
-
-    private FoxholeObservation CalculateAdjustedTarget()
+    private List<FoxholeObservation> CalculateTargets()
     {
-        var baseTarget = CalculateBaseTarget();
-
-        // Ensure values are actually valid
-        if (_characteristics.MinRange > _characteristics.MaxRange)
-            return baseTarget;
-
-        // Apply wind offset; essentially saying 'aim here instead!'
-        baseTarget = FoxholeObservation.FromVector(baseTarget.Vector + _wind.CalculateOffset(_characteristics));
+        var toReturn = new List<FoxholeObservation>();
         
-        // Apply adjustments; namely constrain the distance to the range of the gun
-        var baseDistance = Math.Clamp(baseTarget.Distance, _characteristics.MinRange, _characteristics.MaxRange);
-        var adjustedDistance = (float)Math.Round((baseDistance - _characteristics.MinRange) / _characteristics.RangeStep) * _characteristics.RangeStep + _characteristics.MinRange;
-        baseTarget.Distance = adjustedDistance;
+        // Check for invalid configuration
+        if (_characteristics.MinRange > _characteristics.MaxRange)
+            return toReturn;
 
-        return baseTarget;
+        // Start with the target vector and start adding the negative of each reference point's vector to build up the chain to each gun
+        var currentVector = new FoxholeObservation() { Distance = _target.Distance, Azimuth = _target.Azimuth}.Vector;
+        foreach (var observation in _referencePoints)
+        {
+            currentVector += -observation.Vector;
+            
+            // If this is an artillery gun go ahead and add the result to our list
+            if (!observation.IsArtillery)
+                continue;
+            
+            // Apply wind offset; essentially saying 'aim here instead!'
+            var thisTarget = FoxholeObservation.FromVector(currentVector + _wind.CalculateOffset(_characteristics));
+            thisTarget = thisTarget with { TextHint = observation.TextHint, IsArtillery = true };
+        
+            // Apply adjustments; namely constrain the distance to the range of the gun
+            var baseDistance = Math.Clamp(thisTarget.Distance, _characteristics.MinRange, _characteristics.MaxRange);
+            var adjustedDistance = (float)Math.Round((baseDistance - _characteristics.MinRange) / _characteristics.RangeStep) * _characteristics.RangeStep + _characteristics.MinRange;
+            thisTarget.Distance = adjustedDistance;
+            
+            toReturn.Add(thisTarget);
+        }
+
+        return toReturn;
     }
 
     private async Task OpenGunSettingsDialog()
     {
         var parameters = new DialogParameters<GunDialog>() { { "Characteristics", _characteristics } };
         var dialog = await DialogService.ShowAsync<GunDialog>("Gun Configuration", parameters);
-        var result = await dialog.Result;
+        await dialog.Result;
     }
 
     private async Task OpenWindHelp()
     {
         var dialog = await DialogService.ShowAsync<WindDialog>("Wind Instructions");
-        var result = await dialog.Result;
+        await dialog.Result;
     }
 }

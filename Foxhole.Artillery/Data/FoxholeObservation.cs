@@ -8,6 +8,7 @@ public record FoxholeObservation
     public float Distance;
     public float Azimuth;
     public string? TextHint;
+    public bool IsArtillery;
 
     public Vector2 Vector => new((float)Math.Cos(Azimuth * RadMultiple) * Distance,
         (float)Math.Sin(Azimuth * RadMultiple) * Distance);
