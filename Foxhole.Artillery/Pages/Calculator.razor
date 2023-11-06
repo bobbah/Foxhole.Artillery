@@ -1,74 +1,33 @@
 @page "/"
 @using System.Numerics
 @using Foxhole.Artillery.Data
+@using Foxhole.Artillery.Shared.Calculator
+
+@inject IDialogService DialogService
 
 <PageTitle>Calculator</PageTitle>
 
 <MudGrid>
-    <MudItem xs="8">
+    <MudItem xs="12" Class="d-flex align-center flex-wrap justify-space-between">
         <MudText Typo="Typo.h3">Artillery Calculator</MudText>
-    </MudItem>
-    <MudItem xs="4">
-        <MudSelect @bind-Value="TypeOfGun" Label="Gun Preset" Placeholder="None" TransformOrigin="Origin.BottomCenter">
-            <MudSelectItem Value="@GunType.WardenHowitzer120">Huber Lariat 120mm</MudSelectItem>
-            <MudSelectItem Value="@GunType.WardenHowitzer150">Huber Exalt 150mm</MudSelectItem>
-            <MudSelectItem Value="@GunType.WardenGunboat">74b-1 Ronan Gunship</MudSelectItem>
-            <MudSelectItem Value="@GunType.Mortar">Cremari Mortar</MudSelectItem>
-        </MudSelect>
-    </MudItem>
-    <MudItem xs="12" md="6">
-        <MudPaper Outlined="true" Class="pa-4 mud-height-full">
-            <MudGrid>
-                <MudItem xs="12">
-                    <MudText Typo="Typo.h5">Gun Configuration</MudText>
-                </MudItem>
-                <MudItem xs="12">
-                    <MudGrid>
-                        <MudItem xs="4">
-                            <MudNumericField HideSpinButtons @bind-Value="_minRange" Format="F0" Label="Min Range" Adornment="Adornment.End" AdornmentText="m"/>
-                        </MudItem>
-                        <MudItem xs="4">
-                            <MudNumericField HideSpinButtons @bind-Value="_maxRange" Format="F0" Label="Max Range" Adornment="Adornment.End" AdornmentText="m"/>
-                        </MudItem>
-                        <MudItem xs="4">
-                            <MudNumericField HideSpinButtons @bind-Value="_rangeStep" Format="F2" Label="Increment" Adornment="Adornment.End" AdornmentText="m" Min="1" Max="10"/>
-                        </MudItem>
-                    </MudGrid>
-                </MudItem>
-            </MudGrid>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" md="6">
-        <MudPaper Outlined="true" Class="pa-4 mud-height-full">
-            <MudGrid>
-                <MudItem xs="12" Class="d-flex align-center">
-                    <MudText Typo="Typo.h5" Inline>Shot History</MudText>
-                    <MudSpacer />
-                    <MudButton Variant="Variant.Outlined" OnClick="() => _observedShots.Clear()">Reset</MudButton>
-                </MudItem>
-                <MudItem xs="12">
-                    <MudGrid>
-                        <MudItem xs="4">
-                            <MudNumericField HideSpinButtons @bind-Value="_hitDistance" Format="F0" Label="Distance" Adornment="Adornment.End" AdornmentText="m"/>
-                        </MudItem>
-                        <MudItem xs="4">
-                            <MudNumericField HideSpinButtons @bind-Value="_hitAzimuth" Format="F1" Label="Azimuth" Adornment="Adornment.End" AdornmentText="°"/>
-                        </MudItem>
-                        <MudItem xs="4" Class="d-flex align-end">
-                            <MudButton Variant="Variant.Outlined" OnClick="RecordShot" FullWidth>Record</MudButton>
-                        </MudItem>
-                    </MudGrid>
-                </MudItem>
-            </MudGrid>
-        </MudPaper>
+        <div class="d-flex align-center flex-nowrap">
+            <MudSelect @bind-Value="TypeOfGun" Label="Gun Preset" Placeholder="None" TransformOrigin="Origin.BottomCenter" Class="flex-shrink-1 flex-grow-0" Style="min-width: 250px;" Dense>
+                <MudSelectItem Value="@GunType.WardenHowitzer120">Huber Lariat 120mm</MudSelectItem>
+                <MudSelectItem Value="@GunType.WardenHowitzer150">Huber Exalt 150mm</MudSelectItem>
+                <MudSelectItem Value="@GunType.WardenGunboat">74b-1 Ronan Gunship</MudSelectItem>
+                <MudSelectItem Value="@GunType.Mortar">Cremari Mortar</MudSelectItem>
+                <MudSelectItem Value="@GunType.CollieHowitzer120">120-68 “Koronides” Field Gun</MudSelectItem>
+                <MudSelectItem Value="@GunType.CollieHowitzer150">50-500 “Thunderbolt” Cannon</MudSelectItem>
+            </MudSelect>
+            <MudIconButton Icon="@Icons.Material.Filled.Settings" OnClick="OpenGunSettingsDialog"></MudIconButton>
+        </div>
     </MudItem>
     <MudItem xs="12" md="4">
         <MudPaper Outlined="true" Class="pa-4 mud-height-full">
             <MudGrid>
-                <MudItem xs="12" Class="d-flex align-center">
+                <MudItem xs="12" Class="d-flex align-center justify-space-between">
                     <MudText Typo="Typo.h5" Inline>Spotter to Target</MudText>
-                    <MudSpacer />
-                    <MudButton Variant="Variant.Outlined" OnClick="AddReference">+ REF</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddReference" Size="Size.Small">+ REF</MudButton>
                 </MudItem>
                 <MudItem xs="12">
                     <MudGrid>
@@ -86,18 +45,22 @@
     <MudItem xs="12" md="4">
         <MudPaper Outlined="true" Class="pa-4 mud-height-full">
             <MudGrid>
-                <MudItem xs="12" Class="d-flex align-center">
-                    <MudText Typo="Typo.h5" Inline>Offset</MudText>
-                    <MudSpacer />
-                    <MudButton Variant="Variant.Outlined" OnClick="UseHistoryOffset" Disabled="@(_observedShots.Count == 0)">USE HST</MudButton>
+                <MudItem xs="12" Class="d-flex align-center justify-space-between">
+                    <MudText Typo="Typo.h5" Inline>Wind</MudText>
+                    <MudIconButton Variant="Variant.Filled" Color="Color.Primary" Icon="@Icons.Material.Filled.QuestionMark" OnClick="OpenWindHelp" Size="Size.Small"></MudIconButton>
                 </MudItem>
                 <MudItem xs="12">
                     <MudGrid>
                         <MudItem xs="6">
-                            <MudNumericField @bind-Value="_offset.Distance" Format="F0" Label="+/- Distance" Adornment="Adornment.End" AdornmentText="m"/>
+                            <MudSelect @bind-Value="_wind.Level" Label="Wind Level" TransformOrigin="Origin.BottomCenter">
+                                @foreach (var windLevel in Enum.GetValues<WindLevel>())
+                                {
+                                    <MudSelectItem Value="@windLevel">@windLevel</MudSelectItem>
+                                }
+                            </MudSelect>
                         </MudItem>
                         <MudItem xs="6">
-                            <MudNumericField @bind-Value="_offset.Azimuth" Format="F1" Label="+/- Azimuth" Adornment="Adornment.End" AdornmentText="°"/>
+                            <MudNumericField HideSpinButtons @bind-Value="_wind.WindAzimuth" Format="F1" Label="Wind Azimuth" Adornment="Adornment.End" AdornmentText="°"/>
                         </MudItem>
                     </MudGrid>
                 </MudItem>
@@ -126,27 +89,32 @@
     @for (var i = 0; i < _referencePoints.Count; i++)
     {
         var cachedIdx = i;
+        var isLast = cachedIdx == _referencePoints.Count - 1;
         var cursor = _referencePoints[cachedIdx];
         var name = cachedIdx == _referencePoints.Count - 1 ? "Artillery" : _rpNames[_referencePoints.Count - cachedIdx - 2];
         var lastName = cachedIdx == 0 ? "Spotter" : _rpNames[_referencePoints.Count - cachedIdx - 1];
         <MudItem xs="12">
             <MudPaper Outlined="true" Class="pa-4">
                 <MudGrid>
-                    <MudItem xs="10">
+                    <MudItem xs="12" Class="d-flex align-center justify-space-between">
                         <MudText Typo="Typo.h5">@lastName to @name</MudText>
+                        @if (!isLast)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => RemoveReference(cachedIdx)" Size="Size.Small">Delete</MudButton>
+                        }
                     </MudItem>
-                    @if (cachedIdx != _referencePoints.Count - 1)
-                    {
-                        <MudItem xs="2">
-                            <MudButton Variant="Variant.Outlined" OnClick="() => RemoveReference(cachedIdx)" FullWidth>Delete</MudButton>
-                        </MudItem>
-                    }
                     <MudItem xs="12">
                         <MudGrid>
-                            <MudItem xs="6">
+                            @if (!isLast)
+                            {
+                                <MudItem xs="12" md="4">
+                                    <MudTextField @bind-Value="@cursor.TextHint" Placeholder="Description" Label="Description"></MudTextField>
+                                </MudItem>
+                            }
+                            <MudItem xs="6" md="@(isLast ? 6 : 4)">
                                 <MudNumericField HideSpinButtons @bind-Value="cursor.Distance" Format="F0" Label="Distance" Adornment="Adornment.End" AdornmentText="m"/>
                             </MudItem>
-                            <MudItem xs="6">
+                            <MudItem xs="6" md="@(isLast ? 6 : 4)">
                                 <MudNumericField HideSpinButtons @bind-Value="cursor.Azimuth" Format="F1" Label="Azimuth" Adornment="Adornment.End" AdornmentText="°"/>
                             </MudItem>
                         </MudGrid>
@@ -158,30 +126,21 @@
 </MudGrid>
 
 @code {
+    private WindObservation _wind = new WindObservation();
     private FoxholeObservation _target = new FoxholeObservation();
     private List<FoxholeObservation> _referencePoints = new List<FoxholeObservation>() { new FoxholeObservation() };
-    private int _minRange;
-    private int _maxRange;
-    private float _rangeStep = 1;
     private int _hitDistance;
     private float _hitAzimuth;
-    private FoxholeObservation _offset = new FoxholeObservation();
-    private List<Vector2> _observedShots = new List<Vector2>();
-
+    private FiringCharacteristics _characteristics = new FiringCharacteristics() { RangeStep = 1 };
     private GunType _typeOfGun;
-    
+
     private GunType TypeOfGun
     {
         get => _typeOfGun;
         set
         {
             _typeOfGun = value;
-            if (_typeOfGun == GunType.Unknown)
-                return;
-            var foundProfile = FiringCharacteristics.FromType(value);
-            _minRange = foundProfile.MinRange;
-            _maxRange = foundProfile.MaxRange;
-            _rangeStep = foundProfile.RangeStep;
+            _characteristics = _typeOfGun == GunType.Unknown ? new FiringCharacteristics() { RangeStep = 1 } : FiringCharacteristics.FromType(value);
         }
     }
 
@@ -220,38 +179,39 @@
         _referencePoints.Insert(0, new FoxholeObservation());
     }
 
-    private void RecordShot()
-    {
-        var observed = new FoxholeObservation() { Distance = _hitDistance, Azimuth = _hitAzimuth };
-        var targeted = new FoxholeObservation() { Distance = _target.Distance + _offset.Distance, Azimuth = _target.Azimuth + _offset.Azimuth };
-        _observedShots.Add(targeted.Vector - observed.Vector);
-        _hitDistance = 0;
-        _hitAzimuth = 0;
-    }
-
-    private void UseHistoryOffset()
-    {
-        _offset = FoxholeObservation.FromVector(_observedShots.Aggregate(Vector2.Zero, (vec, next) => vec + next) / _observedShots.Count);
-    }
-
     private void RemoveReference(int index) => _referencePoints.RemoveAt(index);
 
-    private FoxholeObservation CalculateBaseTarget() => FoxholeObservation.FromVector(_referencePoints.Aggregate(Vector2.Zero, (vec, observation) => vec += observation.Vector * -1) + (new FoxholeObservation() { Distance = _target.Distance + _offset.Distance, Azimuth = _target.Azimuth + _offset.Azimuth }).Vector);
+    private FoxholeObservation CalculateBaseTarget() => FoxholeObservation.FromVector(_referencePoints.Aggregate(Vector2.Zero, (vec, observation) => vec += observation.Vector * -1) + (new FoxholeObservation() { Distance = _target.Distance, Azimuth = _target.Azimuth }).Vector);
 
     private FoxholeObservation CalculateAdjustedTarget()
     {
         var baseTarget = CalculateBaseTarget();
 
         // Ensure values are actually valid
-        if (_minRange > _maxRange)
+        if (_characteristics.MinRange > _characteristics.MaxRange)
             return baseTarget;
 
+        // Apply wind offset; essentially saying 'aim here instead!'
+        baseTarget = FoxholeObservation.FromVector(baseTarget.Vector + _wind.CalculateOffset(_characteristics));
+        
         // Apply adjustments; namely constrain the distance to the range of the gun
-        var baseDistance = Math.Clamp(baseTarget.Distance, _minRange, _maxRange);
-        var adjustedDistance = (float)Math.Round((baseDistance - _minRange) / _rangeStep) * _rangeStep + _minRange;
+        var baseDistance = Math.Clamp(baseTarget.Distance, _characteristics.MinRange, _characteristics.MaxRange);
+        var adjustedDistance = (float)Math.Round((baseDistance - _characteristics.MinRange) / _characteristics.RangeStep) * _characteristics.RangeStep + _characteristics.MinRange;
         baseTarget.Distance = adjustedDistance;
 
         return baseTarget;
     }
 
+    private async Task OpenGunSettingsDialog()
+    {
+        var parameters = new DialogParameters<GunDialog>() { { "Characteristics", _characteristics } };
+        var dialog = await DialogService.ShowAsync<GunDialog>("Gun Configuration", parameters);
+        var result = await dialog.Result;
+    }
+
+    private async Task OpenWindHelp()
+    {
+        var dialog = await DialogService.ShowAsync<WindDialog>("Wind Instructions");
+        var result = await dialog.Result;
+    }
 }

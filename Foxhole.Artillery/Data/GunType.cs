@@ -6,5 +6,7 @@ public enum GunType
     WardenHowitzer120,
     WardenHowitzer150,
     Mortar,
-    WardenGunboat
+    WardenGunboat,
+    CollieHowitzer120,
+    CollieHowitzer150
 }
