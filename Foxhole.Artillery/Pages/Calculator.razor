@@ -3,10 +3,12 @@
 @using Foxhole.Artillery.Shared.Calculator
 @using System.Text.Json
 @using System.Text
+@using System.IO.Compression
 
 @inject IDialogService DialogService
 @inject IJSRuntime JsRuntime
 @inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
 
 <PageTitle>Calculator</PageTitle>
 
@@ -29,11 +31,14 @@
                 <MudIconButton Icon="@Icons.Material.Filled.Download" OnClick="SaveState" Color="Color.Primary" Variant="Variant.Filled" Class="mr-2"></MudIconButton>
             </MudTooltip>
             <MudTooltip Text="Load firing plan">
-                <MudFileUpload T="IBrowserFile" FilesChanged="LoadState" Class="mt-0" Accept=".json">
+                <MudFileUpload T="IBrowserFile" FilesChanged="LoadState" Class="mt-0 mr-2" Accept=".json">
                     <ButtonTemplate>
                         <MudIconButton HtmlTag="label" Icon="@Icons.Material.Filled.Upload" Color="Color.Primary" Variant="Variant.Filled" for="@context"></MudIconButton>
                     </ButtonTemplate>
                 </MudFileUpload>
+            </MudTooltip>
+            <MudTooltip Text="Copy link to plan">
+                <MudIconButton Icon="@Icons.Material.Filled.Link" OnClick="CopyLink" Color="Color.Primary" Variant="Variant.Filled"></MudIconButton>
             </MudTooltip>
         </div>
     </MudItem>
@@ -167,9 +172,12 @@
 
 @code {
 
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "s")]
+    public string? CompressedState { get; set; }
+
     private CalculatorState _state = new()
     {
-        FiringCharacteristics = new FiringCharacteristics(),
         ReferencePoints = new List<FoxholeObservation> { new() { IsArtillery = true, TextHint = "Battery A" } }
     };
 
@@ -208,6 +216,71 @@
         "Yankee",
         "Zulu"
     };
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        // Attempt to set state from the URL
+        var decompressed = DecompressState();
+        if (decompressed != null)
+            _state = CalculatorState.FromDTO(decompressed);
+    }
+
+    private CalculatorStateDTO? DecompressState()
+    {
+        var defaultState = new CalculatorStateDTO
+        {
+            ReferencePoints = new List<FoxholeObservation> { new() { IsArtillery = true, TextHint = "Battery A" } }
+        };
+
+        if (CompressedState == null || string.IsNullOrWhiteSpace(CompressedState))
+            return defaultState;
+        
+        // Decompress using deflate
+        try
+        {
+            var base64EncodedBytes = Convert.FromBase64String(CompressedState);
+            using var compressedStream = new MemoryStream(base64EncodedBytes);
+            using var zipStream = new GZipStream(compressedStream, CompressionMode.Decompress);
+            using var resultStream = new MemoryStream();
+            zipStream.CopyTo(resultStream);
+
+            var decompressedBytes = resultStream.ToArray();
+            var json = Encoding.UTF8.GetString(decompressedBytes);
+            return JsonSerializer.Deserialize<CalculatorStateDTO>(json, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true, IncludeFields = true });
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to use linked calculator state, try again maybe? ({ex.Message})", Severity.Error);
+            return defaultState;
+        }
+    }
+
+    private string CompressState()
+    {
+        try
+        {
+            var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(CalculatorStateDTO.FromState(_state), new JsonSerializerOptions() { IncludeFields = true }));
+            using var compressedStream = new MemoryStream();
+            using (var zipStream = new GZipStream(compressedStream, CompressionLevel.SmallestSize))
+            {
+                zipStream.Write(bytes, 0, bytes.Length);
+            }
+            var compressedBytes = compressedStream.ToArray();
+            return Convert.ToBase64String(compressedBytes);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to generate compressed state ({ex.Message})", Severity.Error);
+            return string.Empty;
+        }
+    }
+
+    private async Task CopyLink()
+    {
+        await JsRuntime.InvokeVoidAsync("clipboardCopy.copyText", NavigationManager.GetUriWithQueryParameter("s", CompressState()));
+    }
 
     private void AddReference()
     {

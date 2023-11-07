@@ -3,11 +3,11 @@ namespace Foxhole.Artillery.Data;
 public record CalculatorStateDTO
 {
     public DateTimeOffset GeneratedAt;
-    public AssemblyInformation AppVersion;
-    public FoxholeObservation Target;
-    public WindObservation Wind;
-    public List<FoxholeObservation> ReferencePoints;
-    public FiringCharacteristics FiringCharacteristics;
+    public AssemblyInformation AppVersion = AssemblyInformation.Current;
+    public FoxholeObservation Target = new();
+    public WindObservation Wind = new();
+    public List<FoxholeObservation> ReferencePoints = new();
+    public FiringCharacteristics FiringCharacteristics = new();
 
     public static CalculatorStateDTO FromState(CalculatorState state) =>
         new()
