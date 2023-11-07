@@ -1,8 +1,12 @@
 @page "/"
 @using Foxhole.Artillery.Data
 @using Foxhole.Artillery.Shared.Calculator
+@using System.Text.Json
+@using System.Text
 
 @inject IDialogService DialogService
+@inject IJSRuntime JsRuntime
+@inject ISnackbar Snackbar
 
 <PageTitle>Calculator</PageTitle>
 
@@ -10,7 +14,7 @@
     <MudItem xs="12" Class="d-flex align-center flex-wrap justify-space-between">
         <MudText Typo="Typo.h3">Artillery Calculator</MudText>
         <div class="d-flex align-center flex-nowrap">
-            <MudSelect @bind-Value="TypeOfGun" Label="Gun Preset" Placeholder="None" TransformOrigin="Origin.BottomCenter" Class="flex-shrink-1 flex-grow-0" Style="min-width: 250px;" Dense>
+            <MudSelect @bind-Value="TypeOfGun" Label="Artillery Gun Preset" Placeholder="None" TransformOrigin="Origin.BottomCenter" Class="flex-shrink-1 flex-grow-0 mr-2" Style="min-width: 250px;" Dense Variant="Variant.Outlined">
                 <MudSelectItem Value="@GunType.WardenHowitzer120">Huber Lariat 120mm</MudSelectItem>
                 <MudSelectItem Value="@GunType.WardenHowitzer150">Huber Exalt 150mm</MudSelectItem>
                 <MudSelectItem Value="@GunType.WardenGunboat">74b-1 Ronan Gunship</MudSelectItem>
@@ -18,7 +22,19 @@
                 <MudSelectItem Value="@GunType.CollieHowitzer120">120-68 “Koronides” Field Gun</MudSelectItem>
                 <MudSelectItem Value="@GunType.CollieHowitzer150">50-500 “Thunderbolt” Cannon</MudSelectItem>
             </MudSelect>
-            <MudIconButton Icon="@Icons.Material.Filled.Settings" OnClick="OpenGunSettingsDialog"></MudIconButton>
+            <MudTooltip Text="Customize gun characteristics">
+                <MudIconButton Icon="@Icons.Material.Filled.Settings" OnClick="OpenGunSettingsDialog" Color="Color.Primary" Variant="Variant.Filled" Class="mr-2"></MudIconButton>
+            </MudTooltip>
+            <MudTooltip Text="Save/export firing plan">
+                <MudIconButton Icon="@Icons.Material.Filled.Download" OnClick="SaveState" Color="Color.Primary" Variant="Variant.Filled" Class="mr-2"></MudIconButton>
+            </MudTooltip>
+            <MudTooltip Text="Load firing plan">
+                <MudFileUpload T="IBrowserFile" FilesChanged="LoadState" Class="mt-0" Accept=".json">
+                    <ButtonTemplate>
+                        <MudIconButton HtmlTag="label" Icon="@Icons.Material.Filled.Upload" Color="Color.Primary" Variant="Variant.Filled" for="@context"></MudIconButton>
+                    </ButtonTemplate>
+                </MudFileUpload>
+            </MudTooltip>
         </div>
     </MudItem>
     <MudItem xs="12" md="4">
@@ -26,15 +42,18 @@
             <MudGrid>
                 <MudItem xs="12" Class="d-flex align-center justify-space-between">
                     <MudText Typo="Typo.h5" Inline>Spotter to Target</MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddReference" Size="Size.Small">+ REF</MudButton>
+                    <MudTooltip Text="Add reference point">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddReference" Size="Size.Small">+ REF</MudButton>
+                    </MudTooltip>
+
                 </MudItem>
                 <MudItem xs="12">
                     <MudGrid>
                         <MudItem xs="6">
-                            <MudNumericField HideSpinButtons @bind-Value="_target.Distance" Format="F0" Label="Distance" Adornment="Adornment.End" AdornmentText="m"/>
+                            <MudNumericField HideSpinButtons @bind-Value="_state.Target.Distance" Format="F0" Label="Distance" Adornment="Adornment.End" AdornmentText="m" Min="0"/>
                         </MudItem>
                         <MudItem xs="6">
-                            <MudNumericField HideSpinButtons @bind-Value="_target.Azimuth" Format="F1" Label="Azimuth" Adornment="Adornment.End" AdornmentText="°"/>
+                            <MudNumericField HideSpinButtons @bind-Value="_state.Target.Azimuth" Format="F1" Label="Azimuth" Adornment="Adornment.End" AdornmentText="°" Min="0" Max="360"/>
                         </MudItem>
                     </MudGrid>
                 </MudItem>
@@ -46,12 +65,14 @@
             <MudGrid>
                 <MudItem xs="12" Class="d-flex align-center justify-space-between">
                     <MudText Typo="Typo.h5" Inline>Wind</MudText>
-                    <MudIconButton Variant="Variant.Filled" Color="Color.Primary" Icon="@Icons.Material.Filled.QuestionMark" OnClick="OpenWindHelp" Size="Size.Small"></MudIconButton>
+                    <MudTooltip Text="Wind usage guide">
+                        <MudIconButton Variant="Variant.Filled" Color="Color.Primary" Icon="@Icons.Material.Filled.QuestionMark" OnClick="OpenWindHelp" Size="Size.Small"></MudIconButton>
+                    </MudTooltip>
                 </MudItem>
                 <MudItem xs="12">
                     <MudGrid>
                         <MudItem xs="6">
-                            <MudSelect @bind-Value="_wind.Level" Label="Wind Level" TransformOrigin="Origin.BottomCenter">
+                            <MudSelect @bind-Value="_state.Wind.Level" Label="Wind Level" TransformOrigin="Origin.BottomCenter">
                                 @foreach (var windLevel in Enum.GetValues<WindLevel>())
                                 {
                                     <MudSelectItem Value="@windLevel">@windLevel</MudSelectItem>
@@ -59,7 +80,7 @@
                             </MudSelect>
                         </MudItem>
                         <MudItem xs="6">
-                            <MudNumericField HideSpinButtons @bind-Value="_wind.WindAzimuth" Format="F1" Label="Wind Azimuth" Adornment="Adornment.End" AdornmentText="°"/>
+                            <MudNumericField HideSpinButtons @bind-Value="_state.Wind.WindAzimuth" Format="F1" Label="Wind Azimuth" Adornment="Adornment.End" AdornmentText="°" Min="0" Max="360"/>
                         </MudItem>
                     </MudGrid>
                 </MudItem>
@@ -75,33 +96,53 @@
                 <MudItem xs="12">
                     @foreach (var observation in CalculateTargets())
                     {
-                        <MudText>
-                            <MudChip Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
-                                @(string.IsNullOrWhiteSpace(observation.TextHint) ? "Unnamed Battery" : observation.TextHint):
-                            </MudChip> @($"{observation.Distance:0}")m, @($"{observation.Azimuth:0.0}")°
-                        </MudText>
+                        <div>
+                            <MudTooltip Text="@(observation.IsLimited ? $"Calculated vector is out-of-range: {observation.UnlimitedVector.Distance:0}m, {observation.UnlimitedVector.Azimuth:0.0}°" : "")">
+                                <MudText Class="d-flex align-center">
+                                    @if (observation.IsLimited)
+                                    {
+                                        <MudBadge Color="Color.Error" Dot Overlap>
+                                            <MudChip Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
+                                                @(string.IsNullOrWhiteSpace(observation.FinalVector.TextHint) ? "Unnamed Battery" : observation.FinalVector.TextHint):
+                                            </MudChip>
+                                        </MudBadge>
+                                    }
+                                    else
+                                    {
+                                        <MudChip Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
+                                            @(string.IsNullOrWhiteSpace(observation.FinalVector.TextHint) ? "Unnamed Battery" : observation.FinalVector.TextHint):
+                                        </MudChip>
+                                    }
+                                    @($"{observation.FinalVector.Distance:0}")m, @($"{observation.FinalVector.Azimuth:0.0}")°
+                                </MudText>
+                            </MudTooltip>
+                        </div>
                     }
                 </MudItem>
             </MudGrid>
         </MudPaper>
     </MudItem>
-    @for (var i = 0; i < _referencePoints.Count; i++)
+    @for (var i = 0; i < _state.ReferencePoints.Count; i++)
     {
         var cachedIdx = i;
-        var isLast = cachedIdx == _referencePoints.Count - 1;
-        var cursor = _referencePoints[cachedIdx];
-        var name = cachedIdx == _referencePoints.Count - 1 ? "Artillery" : _rpNames[_referencePoints.Count - cachedIdx - 2];
-        var lastName = cachedIdx == 0 ? "Spotter" : _rpNames[_referencePoints.Count - cachedIdx - 1];
+        var isLast = cachedIdx == _state.ReferencePoints.Count - 1;
+        var cursor = _state.ReferencePoints[cachedIdx];
+        var name = cachedIdx == _state.ReferencePoints.Count - 1 ? "Artillery" : _rpNames[_state.ReferencePoints.Count - cachedIdx - 2];
+        var lastName = cachedIdx == 0 ? "Spotter" : _rpNames[_state.ReferencePoints.Count - cachedIdx - 1];
         <MudItem xs="12">
             <MudPaper Outlined="true" Class="pa-4">
                 <MudGrid>
                     <MudItem xs="12" Class="d-flex align-center justify-space-between">
                         <MudText Typo="Typo.h5">@lastName to @name</MudText>
                         <div class="d-flex align-center flex-nowrap">
-                            <MudButton Disabled="@isLast" Variant="Variant.Filled" Color="@(cursor.IsArtillery ? Color.Error : Color.Primary)" Size="Size.Small" OnClick="() => cursor.IsArtillery = !cursor.IsArtillery">@(cursor.IsArtillery ? "- ARTILLERY" : "+ ARTILLERY")</MudButton>
+                            <MudTooltip Text="@(cursor.IsArtillery ? "Remove point from artillery batteries" : "Mark point as artillery battery")">
+                                <MudButton Disabled="@isLast" Variant="Variant.Filled" Color="@(cursor.IsArtillery ? Color.Error : Color.Primary)" Size="Size.Small" OnClick="() => cursor.IsArtillery = !cursor.IsArtillery">@(cursor.IsArtillery ? "- ARTILLERY" : "+ ARTILLERY")</MudButton>
+                            </MudTooltip>
                             @if (!isLast)
                             {
-                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => RemoveReference(cachedIdx)" Size="Size.Small" Class="ms-2">Delete</MudButton>
+                                <MudTooltip Text="Delete reference point">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => RemoveReference(cachedIdx)" Size="Size.Small" Class="ms-2">Delete</MudButton>
+                                </MudTooltip>
                             }
                         </div>
                     </MudItem>
@@ -111,10 +152,10 @@
                                 <MudTextField @bind-Value="@cursor.TextHint" Placeholder="A helpful note..." Label="Description"></MudTextField>
                             </MudItem>
                             <MudItem xs="6" md="4">
-                                <MudNumericField HideSpinButtons @bind-Value="cursor.Distance" Format="F0" Label="Distance" Adornment="Adornment.End" AdornmentText="m"/>
+                                <MudNumericField HideSpinButtons @bind-Value="cursor.Distance" Format="F0" Label="Distance" Adornment="Adornment.End" AdornmentText="m" Min="0"/>
                             </MudItem>
                             <MudItem xs="6" md="4">
-                                <MudNumericField HideSpinButtons @bind-Value="cursor.Azimuth" Format="F1" Label="Azimuth" Adornment="Adornment.End" AdornmentText="°"/>
+                                <MudNumericField HideSpinButtons @bind-Value="cursor.Azimuth" Format="F1" Label="Azimuth" Adornment="Adornment.End" AdornmentText="°" Min="0" Max="360"/>
                             </MudItem>
                         </MudGrid>
                     </MudItem>
@@ -125,22 +166,17 @@
 </MudGrid>
 
 @code {
-    private WindObservation _wind = new();
-    private FoxholeObservation _target = new();
-    private List<FoxholeObservation> _referencePoints = new() { new FoxholeObservation() { IsArtillery = true, TextHint = "Battery A" } };
-    private int _hitDistance;
-    private float _hitAzimuth;
-    private FiringCharacteristics _characteristics = new() { RangeStep = 1 };
-    private GunType _typeOfGun;
+
+    private CalculatorState _state = new()
+    {
+        FiringCharacteristics = new FiringCharacteristics(),
+        ReferencePoints = new List<FoxholeObservation> { new() { IsArtillery = true, TextHint = "Battery A" } }
+    };
 
     private GunType TypeOfGun
     {
-        get => _typeOfGun;
-        set
-        {
-            _typeOfGun = value;
-            _characteristics = _typeOfGun == GunType.Unknown ? new FiringCharacteristics() { RangeStep = 1 } : FiringCharacteristics.FromType(value);
-        }
+        get => _state.FiringCharacteristics.GunType;
+        set => _state.FiringCharacteristics = FiringCharacteristics.FromType(value);
     }
 
     private readonly List<string> _rpNames = new()
@@ -175,39 +211,47 @@
 
     private void AddReference()
     {
-        _referencePoints.Insert(0, new FoxholeObservation());
+        _state.ReferencePoints.Insert(0, new FoxholeObservation());
     }
 
-    private void RemoveReference(int index) => _referencePoints.RemoveAt(index);
+    private void RemoveReference(int index) => _state.ReferencePoints.RemoveAt(index);
 
-    private List<FoxholeObservation> CalculateTargets()
+    private List<FiringVector> CalculateTargets()
     {
-        var toReturn = new List<FoxholeObservation>();
-        
+        var toReturn = new List<FiringVector>();
+
         // Check for invalid configuration
-        if (_characteristics.MinRange > _characteristics.MaxRange)
+        if (_state.FiringCharacteristics.MinRange > _state.FiringCharacteristics.MaxRange)
             return toReturn;
 
         // Start with the target vector and start adding the negative of each reference point's vector to build up the chain to each gun
-        var currentVector = new FoxholeObservation() { Distance = _target.Distance, Azimuth = _target.Azimuth}.Vector;
-        foreach (var observation in _referencePoints)
+        var currentVector = new FoxholeObservation() { Distance = _state.Target.Distance, Azimuth = _state.Target.Azimuth }.Vector;
+        foreach (var observation in _state.ReferencePoints)
         {
             currentVector += -observation.Vector;
-            
+
             // If this is an artillery gun go ahead and add the result to our list
             if (!observation.IsArtillery)
                 continue;
-            
+
+            var firingVector = new FiringVector();
+
             // Apply wind offset; essentially saying 'aim here instead!'
-            var thisTarget = FoxholeObservation.FromVector(currentVector + _wind.CalculateOffset(_characteristics));
+            var thisTarget = FoxholeObservation.FromVector(currentVector + _state.Wind.CalculateOffset(_state.FiringCharacteristics));
             thisTarget = thisTarget with { TextHint = observation.TextHint, IsArtillery = true };
-        
-            // Apply adjustments; namely constrain the distance to the range of the gun
-            var baseDistance = Math.Clamp(thisTarget.Distance, _characteristics.MinRange, _characteristics.MaxRange);
-            var adjustedDistance = (float)Math.Round((baseDistance - _characteristics.MinRange) / _characteristics.RangeStep) * _characteristics.RangeStep + _characteristics.MinRange;
-            thisTarget.Distance = adjustedDistance;
             
-            toReturn.Add(thisTarget);
+            // Save the current vector as the 'unlimited' vector
+            firingVector.UnlimitedVector = FoxholeObservation.FromVector(thisTarget.Vector);
+
+            // Apply adjustments; namely constrain the distance to the range of the gun
+            var baseDistance = Math.Clamp(thisTarget.Distance, _state.FiringCharacteristics.MinRange, _state.FiringCharacteristics.MaxRange);
+            var adjustedDistance = (float)Math.Round((baseDistance - _state.FiringCharacteristics.MinRange) / _state.FiringCharacteristics.RangeStep) * _state.FiringCharacteristics.RangeStep + _state.FiringCharacteristics.MinRange;
+            thisTarget.Distance = adjustedDistance;
+
+            firingVector.IsLimited = (int)thisTarget.Distance == _state.FiringCharacteristics.MaxRange || (int)thisTarget.Distance == _state.FiringCharacteristics.MinRange;
+            firingVector.FinalVector = thisTarget;
+
+            toReturn.Add(firingVector);
         }
 
         return toReturn;
@@ -215,7 +259,7 @@
 
     private async Task OpenGunSettingsDialog()
     {
-        var parameters = new DialogParameters<GunDialog>() { { "Characteristics", _characteristics } };
+        var parameters = new DialogParameters<GunDialog>() { { "Characteristics", _state.FiringCharacteristics } };
         var dialog = await DialogService.ShowAsync<GunDialog>("Gun Configuration", parameters);
         await dialog.Result;
     }
@@ -225,4 +269,33 @@
         var dialog = await DialogService.ShowAsync<WindDialog>("Wind Instructions");
         await dialog.Result;
     }
+
+    private async Task SaveState()
+    {
+        var json = JsonSerializer.Serialize(CalculatorStateDTO.FromState(_state), new JsonSerializerOptions() { WriteIndented = true, IncludeFields = true });
+        var bytes = Encoding.UTF8.GetBytes(json);
+        var fileContent = Convert.ToBase64String(bytes);
+        await JsRuntime.InvokeVoidAsync("downloadFile", $"Foxhole.Artillery-{DateTime.UtcNow:yyyy-MM-dd-HH-mm-ss}.json", fileContent);
+    }
+
+    private async Task LoadState(IBrowserFile file)
+    {
+        try
+        {
+            // Get file from stream and attempt to parse it into the state object
+            var stream = file.OpenReadStream();
+            var reader = new StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+            var dto = JsonSerializer.Deserialize<CalculatorStateDTO>(json, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true, IncludeFields = true });
+            _state = CalculatorState.FromDTO(dto!);
+
+            // Notify of state update
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to use uploaded file, try again maybe? ({ex.Message})", Severity.Error);
+        }
+    }
+
 }

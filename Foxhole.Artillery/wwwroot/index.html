@@ -12,10 +12,10 @@
         body, html {
             background-color: rgba(50, 51, 61, 1);
         }
-        
+
         .loading-text {
-            font-family: 'Roboto','Helvetica','Arial','sans-serif';
-            color: rgba(255,255,255,0.6980392156862745);
+            font-family: 'Roboto', 'Helvetica', 'Arial', 'sans-serif';
+            color: rgba(255, 255, 255, 0.6980392156862745);
         }
 
         .loading-screen {
@@ -38,7 +38,7 @@
         .rectangle {
             width: 20px;
             height: 20px;
-            background-color: rgba(255,255,255,0.6980392156862745);
+            background-color: rgba(255, 255, 255, 0.6980392156862745);
             margin: 0 3px;
             animation: dance 0.8s ease-in-out infinite alternate;
         }
@@ -100,6 +100,16 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+<script>
+    function downloadFile(filename, contentBase64) {
+        const link = document.createElement('a');
+        link.href = 'data:application/octet-stream;base64,' + contentBase64;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
 <script src="_framework/blazor.webassembly.js"></script>
 <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 </body>

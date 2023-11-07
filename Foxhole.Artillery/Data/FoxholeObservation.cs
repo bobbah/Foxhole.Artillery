@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text.Json.Serialization;
 
 namespace Foxhole.Artillery.Data;
 
@@ -10,6 +11,7 @@ public record FoxholeObservation
     public string? TextHint;
     public bool IsArtillery;
 
+    [JsonIgnore]
     public Vector2 Vector => new((float)Math.Cos(Azimuth * RadMultiple) * Distance,
         (float)Math.Sin(Azimuth * RadMultiple) * Distance);
 

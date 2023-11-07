@@ -10,7 +10,7 @@ public record FiringCharacteristics
     /// <summary>
     /// The range step in meters, this is how much the gun can increment/decrement the range
     /// </summary>
-    public float RangeStep;
+    public float RangeStep = 1.0f;
 
     /// <summary>
     /// The minimum firing range, in meters
@@ -76,6 +76,10 @@ public record FiringCharacteristics
                 MinRange = 200,
                 MaxRange = 350,
                 WindOffsetMagnitude = new[] { 18.0f, 36.0f, 54.0f, 72.0f, 90.0f }
+            },
+            GunType.Unknown => new FiringCharacteristics()
+            {
+                GunType = type
             },
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };

@@ -9,13 +9,13 @@
     <DialogContent>
         <MudGrid>
             <MudItem xs="4">
-                <MudNumericField HideSpinButtons @bind-Value="Characteristics.MinRange" Format="F0" Label="Min Range" Adornment="Adornment.End" AdornmentText="m"/>
+                <MudNumericField HideSpinButtons @bind-Value="Characteristics.MinRange" Format="F0" Label="Min Range" Adornment="Adornment.End" AdornmentText="m" Min="0"/>
             </MudItem>
             <MudItem xs="4">
-                <MudNumericField HideSpinButtons @bind-Value="Characteristics.MaxRange" Format="F0" Label="Max Range" Adornment="Adornment.End" AdornmentText="m"/>
+                <MudNumericField HideSpinButtons @bind-Value="Characteristics.MaxRange" Format="F0" Label="Max Range" Adornment="Adornment.End" AdornmentText="m" Min="0"/>
             </MudItem>
             <MudItem xs="4">
-                <MudNumericField HideSpinButtons @bind-Value="Characteristics.RangeStep" Format="F2" Label="Increment" Adornment="Adornment.End" AdornmentText="m" Min="1" Max="10"/>
+                <MudNumericField HideSpinButtons @bind-Value="Characteristics.RangeStep" Format="F2" Label="Increment" Adornment="Adornment.End" AdornmentText="m" Min="1"/>
             </MudItem>
         </MudGrid>
     </DialogContent>
