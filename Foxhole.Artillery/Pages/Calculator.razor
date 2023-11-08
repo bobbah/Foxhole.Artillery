@@ -103,7 +103,7 @@
                     @foreach (var observation in CalculateTargets().OrderBy(x => x.OriginName))
                     {
                         <div>
-                            <MudTooltip Text="@($"{(observation.IsLimited ? "Calculated vector is out-of-range: " : "Raw vector: ")}{observation.FinalVector.AsObservation()}")">
+                            <MudTooltip Text="@($"{(observation.IsLimited ? "Calculated vector is out-of-range: " : "Raw vector: ")}{observation.OriginalVector.AsObservation()}")">
                                 <MudText Class="d-flex align-center">
                                     @if (observation.IsLimited)
                                     {
