@@ -3,16 +3,20 @@ namespace Foxhole.Artillery.Data;
 public record CalculatorState
 {
     public Guid? SessionId;
-    public FoxholeObservation Target = new();
+    public string SessionName = "Artillery Calculator";
     public WindObservation Wind = new();
     public List<FoxholeObservation> ReferencePoints = new();
-    public FiringCharacteristics FiringCharacteristics = new();
+    public float TargetDistance;
+    public float TargetAzimuth;
+    public FoxholeObservation TargetReference = FoxholeObservation.Zero;
 
     public static CalculatorState FromDTO(CalculatorStateDTO dto) => new()
     {
-        Target = dto.Target,
+        SessionName = dto.SessionName,
         Wind = dto.Wind,
         ReferencePoints = dto.ReferencePoints,
-        FiringCharacteristics = dto.FiringCharacteristics
+        TargetDistance = dto.TargetDistance,
+        TargetAzimuth = dto.TargetAzimuth,
+        TargetReference = dto.TargetReference
     };
 }

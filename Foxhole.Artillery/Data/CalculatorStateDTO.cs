@@ -4,19 +4,23 @@ public record CalculatorStateDTO
 {
     public DateTimeOffset GeneratedAt;
     public AssemblyInformation AppVersion = AssemblyInformation.Current;
-    public FoxholeObservation Target = new();
+    public string SessionName = "Artillery Calculator";
     public WindObservation Wind = new();
     public List<FoxholeObservation> ReferencePoints = new();
-    public FiringCharacteristics FiringCharacteristics = new();
+    public float TargetDistance;
+    public float TargetAzimuth;
+    public FoxholeObservation TargetReference = FoxholeObservation.Zero;
 
     public static CalculatorStateDTO FromState(CalculatorState state) =>
         new()
         {
             GeneratedAt = DateTimeOffset.Now,
             AppVersion = AssemblyInformation.Current,
-            Target = state.Target,
+            SessionName =  state.SessionName,
             Wind = state.Wind,
             ReferencePoints = state.ReferencePoints,
-            FiringCharacteristics = state.FiringCharacteristics
+            TargetDistance = state.TargetDistance,
+            TargetAzimuth = state.TargetAzimuth,
+            TargetReference = state.TargetReference
         };
 }

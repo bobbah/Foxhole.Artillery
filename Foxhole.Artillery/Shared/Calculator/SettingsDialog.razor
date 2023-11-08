@@ -1,0 +1,37 @@
+@using Foxhole.Artillery.Data
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            @MudDialog.Title
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText>Use the settings below to customize this firing plan.</MudText>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField Label="Plan Title" @bind-Value="State.SessionName"></MudTextField>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; } = null!;
+    
+    [Parameter]
+    public required CalculatorState State { get; set; }
+
+    private void Close()
+    {
+        MudDialog.Close();
+    }
+
+}

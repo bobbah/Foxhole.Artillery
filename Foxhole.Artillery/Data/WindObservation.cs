@@ -19,8 +19,8 @@ public record WindObservation
     public Vector2 CalculateOffset(FiringCharacteristics firingCharacteristics)
     {
         // We can just use an observation under the hood for this, it's basically what the wind is
-        var obs = new FoxholeObservation()
-            { Azimuth = WindAzimuth, Distance = firingCharacteristics.WindOffsetMagnitude[(int)Level] };
-        return -obs.Vector;
+        var obs = new FoxholeObservation("Wind", firingCharacteristics.WindOffsetMagnitude[(int)Level], WindAzimuth,
+            Vector2.Zero);
+        return -obs.Location;
     }
 }

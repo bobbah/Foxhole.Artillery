@@ -1,0 +1,80 @@
+@using Foxhole.Artillery.Data
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            @MudDialog.Title
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="6">
+                <MudTextField @bind-Value="_name" Label="Point Name" Required />
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_reference" T="FoxholeObservation" Label="Observed From" AnchorOrigin="Origin.BottomCenter" Dense Disabled="@(State.ReferencePoints.Count == 0)">
+                    <MudSelectItem Value="@FoxholeObservation.Zero">@FoxholeObservation.Zero.Name</MudSelectItem>
+                    @foreach (var point in State.ReferencePoints.OrderBy(x => x.Artillery).ThenBy(x => x.Name))
+                    {
+                        <MudSelectItem Value="@point">@point.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudNumericField HideSpinButtons @bind-Value="_distance" Format="F0" Label="Distance" Adornment="Adornment.End" AdornmentText="m" Min="0"/>
+            </MudItem>
+            <MudItem xs="6" Class="d-flex align-baseline">
+                <MudNumericField HideSpinButtons @bind-Value="_azimuth" Format="F1" Label="Azimuth" Adornment="Adornment.End" AdornmentText="°" Min="0" Max="360"/>
+                <MudTooltip Text="Reverse Azimuth">
+                    <MudIconButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Icon="@Icons.Material.Filled.Autorenew" Class="ms-2" OnClick="() => _azimuth = (_azimuth + 180) % 360"/>
+                </MudTooltip>
+            </MudItem>
+            <MudItem xs="12">
+                <MudSelect @bind-Value="_artillery" Label="Gun Type (If Present)" AnchorOrigin="Origin.BottomCenter" Dense>
+                    <MudSelectItem Value="@GunType.None">Not Artillery Position</MudSelectItem>
+                    @foreach (var type in FiringCharacteristics.AllTypes)
+                    {
+                        <MudSelectItem Value="@type.GunType">@type.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Close">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AddPoint" Disabled="@(string.IsNullOrWhiteSpace(_name))">Add Point</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public required CalculatorState State { get; set; }
+
+    private string? _name;
+    private float _distance;
+    private float _azimuth;
+    private FoxholeObservation? _reference = FoxholeObservation.Zero;
+    private GunType _artillery;
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        
+        // Try to use the last point we added as the next observation reference
+        _reference = State.ReferencePoints.LastOrDefault() ?? FoxholeObservation.Zero;
+    }
+
+    private void Close()
+    {
+        MudDialog.Close();
+    }
+
+    private void AddPoint()
+    {
+        State.ReferencePoints.Add(new FoxholeObservation(_name!, _distance, _azimuth, _reference ?? FoxholeObservation.Zero) { Artillery = _artillery });
+        MudDialog.Close();
+    }
+}

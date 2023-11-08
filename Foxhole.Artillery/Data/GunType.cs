@@ -2,7 +2,7 @@ namespace Foxhole.Artillery.Data;
 
 public enum GunType
 {
-    Unknown,
+    None,
     WardenHowitzer120,
     WardenHowitzer150,
     Mortar,

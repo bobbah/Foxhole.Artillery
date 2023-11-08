@@ -8,6 +8,11 @@ public record FiringCharacteristics
     public GunType GunType;
 
     /// <summary>
+    /// The pretty display name for the gun type
+    /// </summary>
+    public string Name = null!;
+
+    /// <summary>
     /// The range step in meters, this is how much the gun can increment/decrement the range
     /// </summary>
     public float RangeStep = 1.0f;
@@ -25,63 +30,80 @@ public record FiringCharacteristics
     /// <summary>
     /// The magnitude that each level of wind effects the gun, from level 1-5
     /// </summary>
-    public float[] WindOffsetMagnitude = new float[5] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+    public float[] WindOffsetMagnitude = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 
-    public static FiringCharacteristics FromType(GunType type)
+    /// <summary>
+    /// All possible gun firing characteristics
+    /// </summary>
+    private static readonly Dictionary<GunType, FiringCharacteristics> CharacteristicsMap = new()
     {
-        return type switch
         {
-            GunType.WardenHowitzer120 => new FiringCharacteristics
+            GunType.WardenHowitzer120, new FiringCharacteristics
             {
-                GunType = type,
+                GunType = GunType.WardenHowitzer120,
+                Name = "Huber Lariat 120mm",
                 RangeStep = 8,
                 MinRange = 100,
                 MaxRange = 300,
                 WindOffsetMagnitude = new[] { 15.0f, 30.0f, 45.0f, 60.0f, 75.0f }
-            },
-            GunType.WardenHowitzer150 => new FiringCharacteristics
+            }
+        },
+        {
+            GunType.WardenHowitzer150, new FiringCharacteristics
             {
-                GunType = type,
+                GunType = GunType.WardenHowitzer150,
+                Name = "Huber Exalt 150mm",
                 RangeStep = 8,
                 MinRange = 100,
                 MaxRange = 300,
                 WindOffsetMagnitude = new[] { 15.0f, 30.0f, 45.0f, 60.0f, 75.0f }
-            },
-            GunType.Mortar => new FiringCharacteristics
+            }
+        },
+        {
+            GunType.Mortar, new FiringCharacteristics
             {
-                GunType = type,
+                GunType = GunType.Mortar,
+                Name = "74b-1 Ronan Gunship",
                 RangeStep = 0.5f,
                 MinRange = 45,
                 MaxRange = 80
-            },
-            GunType.WardenGunboat => new FiringCharacteristics
+            }
+        },
+        {
+            GunType.WardenGunboat, new FiringCharacteristics
             {
-                GunType = type,
+                GunType = GunType.WardenGunboat,
+                Name = "Cremari Mortar",
                 RangeStep = 10 / 6.0f,
                 MinRange = 75,
                 MaxRange = 100
-            },
-            GunType.CollieHowitzer120 => new FiringCharacteristics()
+            }
+        },
+        {
+            GunType.CollieHowitzer120, new FiringCharacteristics()
             {
-                GunType = type,
+                GunType = GunType.CollieHowitzer120,
+                Name = "120-68 “Koronides” Field Gun",
                 RangeStep = 8.0f, // not sure...?
                 MinRange = 100,
-                MaxRange = 300,
+                MaxRange = 250,
                 WindOffsetMagnitude = new[] { 12.0f, 24.0f, 36.0f, 48.0f, 60.0f }
-            },
-            GunType.CollieHowitzer150 => new FiringCharacteristics()
+            }
+        },
+        {
+            GunType.CollieHowitzer150, new FiringCharacteristics()
             {
-                GunType = type,
+                GunType = GunType.CollieHowitzer150,
+                Name = "50-500 “Thunderbolt” Cannon",
                 RangeStep = 8.0f, // not sure...?
                 MinRange = 200,
                 MaxRange = 350,
                 WindOffsetMagnitude = new[] { 18.0f, 36.0f, 54.0f, 72.0f, 90.0f }
-            },
-            GunType.Unknown => new FiringCharacteristics()
-            {
-                GunType = type
-            },
-            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
-        };
-    }
+            }
+        },
+    };
+
+    public static FiringCharacteristics FromType(GunType type) => CharacteristicsMap[type];
+
+    public static IEnumerable<FiringCharacteristics> AllTypes => CharacteristicsMap.Values;
 }

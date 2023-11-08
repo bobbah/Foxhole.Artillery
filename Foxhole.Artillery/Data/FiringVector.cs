@@ -15,5 +15,10 @@ public record FiringVector
     /// <summary>
     /// The firing vector before being limited and rounded
     /// </summary>
-    public FoxholeObservation UnlimitedVector;
+    public FoxholeObservation OriginalVector;
+
+    /// <summary>
+    /// The name of the origin point (the battery)
+    /// </summary>
+    public string OriginName;
 }

@@ -5,24 +5,43 @@ namespace Foxhole.Artillery.Data;
 
 public record FoxholeObservation
 {
+    public static readonly FoxholeObservation Zero = new("Origin", 0, 0, Vector2.Zero);
     private const double RadMultiple = Math.PI / 180;
-    public float Distance;
-    public float Azimuth;
-    public string? TextHint;
-    public bool IsArtillery;
 
-    [JsonIgnore]
-    public Vector2 Vector => new((float)Math.Cos(Azimuth * RadMultiple) * Distance,
-        (float)Math.Sin(Azimuth * RadMultiple) * Distance);
+    public Guid Id = Guid.NewGuid();
+    public string Name;
+    public Vector2 Location;
+    public GunType Artillery;
 
-    public static FoxholeObservation FromVector(Vector2 vector)
+    [JsonConstructor]
+    public FoxholeObservation()
     {
-        var distance = (int)Math.Round(vector.Length());
-        var angle = (float)(Math.Atan2(vector.Y, vector.X) * (180 / Math.PI));
-        if (angle < 0)
-            angle += 360;
-        return new FoxholeObservation { Azimuth = angle, Distance = distance };
+        Name = "Unknown Point";
     }
 
-    public override string ToString() => $"{Distance:F2}m, {Azimuth:F1}\u00b0";
+    public FoxholeObservation(string name, float distance, float azimuth, Vector2 observedPoint)
+    {
+        Name = name;
+        Location = LocationFromObservation(distance, azimuth, observedPoint);
+    }
+
+    public FoxholeObservation(string name, float distance, float azimuth, FoxholeObservation observedPoint)
+        : this(name, distance, azimuth, observedPoint.Location)
+    {
+    }
+
+    private static Vector2 LocationFromObservation(float distance, float azimuth, Vector2 observedPoint) =>
+        observedPoint + new Vector2((float)Math.Cos(azimuth * RadMultiple) * distance,
+            (float)Math.Sin(azimuth * RadMultiple) * distance);
+    
+    public override string ToString() => Name;
+
+    public string AsObservation()
+    {
+        var distance = (int)Math.Round(Location.Length());
+        var azimuth = (float)(Math.Atan2(Location.Y, Location.X) * (180 / Math.PI));
+        if (azimuth < 0)
+            azimuth += 360;
+        return $"{distance:0}m, {azimuth:0.0}°";
+    }
 }
