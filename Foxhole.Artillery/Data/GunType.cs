@@ -8,5 +8,6 @@ public enum GunType
     Mortar,
     WardenGunboat,
     CollieHowitzer120,
-    CollieHowitzer150
+    CollieHowitzer150,
+    WardenSkycaller
 }

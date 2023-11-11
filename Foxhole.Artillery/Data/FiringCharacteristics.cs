@@ -101,6 +101,16 @@ public record FiringCharacteristics
                 WindOffsetMagnitude = new[] { 18.0f, 36.0f, 54.0f, 72.0f, 90.0f }
             }
         },
+        {
+            GunType.WardenSkycaller, new FiringCharacteristics()
+            {
+                GunType = GunType.WardenSkycaller,
+                Name = "Niska-Rycker Mk. IX Skycaller",
+                RangeStep = 15.0f,
+                MinRange = 200,
+                MaxRange = 275
+            }
+        }
     };
 
     public static FiringCharacteristics FromType(GunType type) => CharacteristicsMap[type];
