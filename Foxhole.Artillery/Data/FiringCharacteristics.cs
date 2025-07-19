@@ -107,8 +107,8 @@ public record FiringCharacteristics
                 GunType = GunType.WardenSkycaller,
                 Name = "Niska-Rycker Mk. IX Skycaller",
                 RangeStep = 15.0f,
-                MinRange = 200,
-                MaxRange = 275
+                MinRange = 275,
+                MaxRange = 350
             }
         }
     };
