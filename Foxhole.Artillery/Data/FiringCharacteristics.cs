@@ -66,7 +66,8 @@ public record FiringCharacteristics
                 Name = "74b-1 Ronan Gunship",
                 RangeStep = 0.5f,
                 MinRange = 45,
-                MaxRange = 80
+                MaxRange = 80,
+                WindOffsetMagnitude = new[] { 5.0f, 10.0f, 15.0f, 20.0f, 25.0f }
             }
         },
         {
@@ -76,7 +77,8 @@ public record FiringCharacteristics
                 Name = "Cremari Mortar",
                 RangeStep = 10 / 6.0f,
                 MinRange = 75,
-                MaxRange = 100
+                MaxRange = 100,
+                WindOffsetMagnitude = new[] { 5.0f, 10.0f, 15.0f, 20.0f, 25.0f }
             }
         },
         {
@@ -108,7 +110,8 @@ public record FiringCharacteristics
                 Name = "Niska-Rycker Mk. IX Skycaller",
                 RangeStep = 15.0f,
                 MinRange = 275,
-                MaxRange = 350
+                MaxRange = 350,
+                WindOffsetMagnitude = new[] { 15.0f, 30.0f, 45.0f, 60.0f, 75.0f }
             }
         }
     };
